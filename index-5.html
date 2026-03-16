@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>✈️ Sayohat Kalkulyator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg: #0a0e27;
+            --bg2: #1a1040;
+            --glass: rgba(255,255,255,0.04);
+            --glass2: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.08);
+            --border-active: rgba(124,58,237,0.5);
+            --text: #e8e6f0;
+            --text-dim: #6b7194;
+            --accent1: #7c3aed;
+            --accent2: #00d4ff;
+            --green: #22c55e;
+            --yellow: #f59e0b;
+            --orange: #f97316;
+            --red: #ef4444;
+            --tg-blue: #0088cc;
+            --gradient: linear-gradient(135deg, #7c3aed, #00d4ff);
+            --gradient-tg: linear-gradient(135deg, #7c3aed, #0088cc);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        html,body { height:100%; overflow-x:hidden; }
+
+        body {
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 40%, #0d1f3c 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* ===== BG PARTICLES ===== */
+        .bg-particles {
+            position: fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+        }
+        .particle {
+            position:absolute; border-radius:50%;
+            animation: pfloat var(--dur) ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+        @keyframes pfloat {
+            0%,100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.3); }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+        @keyframes barGrow { from{width:0} }
+        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+
+        .slide { animation: slideUp .4s ease forwards; }
+        .slide-d1 { animation-delay:.05s; opacity:0 }
+        .slide-d2 { animation-delay:.1s; opacity:0 }
+        .slide-d3 { animation-delay:.15s; opacity:0 }
+        .slide-d4 { animation-delay:.2s; opacity:0 }
+        .slide-d5 { animation-delay:.25s; opacity:0 }
+        .slide-d6 { animation-delay:.3s; opacity:0 }
+        .slide-d7 { animation-delay:.35s; opacity:0 }
+        .slide-d8 { animation-delay:.4s; opacity:0 }
+        .slide-d9 { animation-delay:.45s; opacity:0 }
+
+        /* ===== LAYOUT ===== */
+        .container {
+            max-width: 440px;
+            margin: 0 auto;
+            padding: 12px 16px 100px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:16px; padding-top:8px;
+        }
+        .logo { font-size:20px; font-weight:800; margin:0;
+            background: linear-gradient(135deg, var(--accent2), #a78bfa);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            letter-spacing:-0.5px;
+        }
+        .subtitle { font-size:12px; margin:2px 0 0; opacity:.5 }
+
+        .lang-btn {
+            background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+            border-radius:20px; padding:6px 14px; color:#a78bfa;
+            font-size:13px; font-weight:700; cursor:pointer;
+            font-family:inherit; backdrop-filter:blur(10px);
+        }
+
+        /* ===== PROGRESS ===== */
+        .progress { display:flex; gap:4px; margin-bottom:16px; }
+        .progress-dot {
+            flex:1; height:3px; border-radius:2px;
+            background:rgba(255,255,255,.1);
+            transition: background .3s;
+        }
+        .progress-dot.active { background: var(--gradient); }
+
+        /* ===== STEP TITLE ===== */
+        .step-title { font-size:20px; font-weight:700; margin-bottom:4px; }
+        .step-hint { font-size:12px; opacity:.4; margin-bottom:16px; }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 12px;
+            cursor: pointer;
+            transition: all .2s ease;
+            color: var(--text);
+            text-align: left;
+            width: 100%;
+            font-family: inherit;
+        }
+        .card:active { transform:scale(.96) }
+        .card.selected {
+            background: linear-gradient(135deg, rgba(124,58,237,.3), rgba(0,212,255,.2));
+            border-color: var(--border-active);
+        }
+
+        .country-grid { display:flex; flex-wrap:wrap; gap:8px; }
+        .country-card { width:calc(50% - 4px); }
+        .country-row { display:flex; align-items:center; gap:8px; }
+        .country-flag { font-size:28px; }
+        .country-name { font-weight:700; font-size:14px; }
+        .country-meta { font-size:11px; opacity:.4; }
+        .country-price { font-size:11px; opacity:.3; margin-top:6px; }
+
+        /* ===== STYLE CARDS ===== */
+        .style-list { display:flex; flex-direction:column; gap:8px; margin-bottom:24px; }
+        .style-card {
+            display:flex; align-items:center; gap:12px;
+            padding:14px 16px;
+        }
+        .style-emoji { font-size:28px; flex-shrink:0; }
+        .style-info { flex:1; }
+        .style-label { font-weight:700; font-size:15px; }
+        .style-desc { font-size:11px; opacity:.4; }
+        .style-price { text-align:right; font-size:13px; font-weight:700; color:var(--accent2); }
+        .style-price small { font-size:10px; opacity:.5; }
+
+        /* ===== OPTION BUTTONS ===== */
+        .options-row { display:flex; gap:6px; margin-bottom:24px; }
+        .opt-btn {
+            flex:1; text-align:center; padding:12px 6px;
+            background: var(--glass); border:1px solid var(--border);
+            border-radius:12px; cursor:pointer; color:var(--text);
+            font-family:inherit; transition:all .15s;
+        }
+        .opt-btn.selected {
+            background: linear-gradient(135deg, rgba(124,58,237,.3), rgba(0,212,255,.2));
+            border-color: var(--border-active);
+        }
+        .opt-btn:active { transform:scale(.95) }
+        .opt-emoji { font-size:24px; }
+        .opt-label { font-size:11px; font-weight:600; margin-top:4px; }
+        .opt-price { font-size:10px; opacity:.4; margin-top:2px; }
+
+        /* ===== DURATION ===== */
+        .dur-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+        .dur-btn {
+            background:rgba(255,255,255,.06); border:none; border-radius:12px;
+            padding:10px 18px; color:#fff; font-weight:700; font-size:15px;
+            cursor:pointer; font-family:inherit; transition:all .2s;
+        }
+        .dur-btn.selected { background:var(--gradient); }
+        .dur-btn:active { transform:scale(.94) }
+
+        /* ===== NAV BUTTONS ===== */
+        .nav-row { display:flex; gap:8px; margin-top:20px; }
+        .btn-back {
+            flex:1; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+            border-radius:14px; padding:14px; color:#a78bfa; font-weight:600;
+            font-size:15px; cursor:pointer; font-family:inherit;
+        }
+        .btn-next {
+            flex:2; background:var(--gradient); border:none; border-radius:14px;
+            padding:14px; color:#fff; font-weight:700; font-size:15px;
+            cursor:pointer; font-family:inherit;
+        }
+        .btn-back:active, .btn-next:active { transform:scale(.96) }
+
+        /* ===== RESULT ===== */
+        .result-hero {
+            background: linear-gradient(135deg, rgba(124,58,237,.2), rgba(0,212,255,.1));
+            border:1px solid rgba(124,58,237,.3);
+            border-radius:20px; padding:20px; margin-bottom:16px;
+            text-align:center; position:relative; overflow:hidden;
+        }
+        .result-hero::after {
+            content:''; position:absolute; top:-30px; right:-30px;
+            width:100px; height:100px; border-radius:50%;
+            background:radial-gradient(circle, rgba(0,212,255,.15), transparent);
+        }
+        .result-country { font-size:14px; opacity:.5; margin-bottom:4px; }
+        .result-total {
+            font-size:42px; font-weight:800; margin-bottom:4px;
+            background:linear-gradient(135deg, #00d4ff, #a78bfa, #f43f5e);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .result-uzs { font-size:13px; opacity:.4; }
+        .result-tag {
+            margin-top:14px; padding:10px 16px;
+            background:rgba(0,0,0,.2); border-radius:12px;
+            display:flex; align-items:center; justify-content:center; gap:8px;
+        }
+        .tag-label { font-weight:700; }
+        .tag-detail { font-size:13px; opacity:.6; }
+
+        /* ===== BREAKDOWN ===== */
+        .breakdown {
+            background:rgba(255,255,255,.03); border:1px solid var(--border);
+            border-radius:16px; padding:16px; margin-bottom:16px;
+        }
+        .bk-row {
+            display:flex; align-items:center; gap:10px; padding:8px 0;
+            border-bottom:1px solid rgba(255,255,255,.04);
+        }
+        .bk-row:last-child { border-bottom:none }
+        .bk-emoji { font-size:18px; }
+        .bk-label { flex:1; font-size:13px; }
+        .bk-bar { width:80px; height:6px; border-radius:3px; background:rgba(255,255,255,.06); overflow:hidden; }
+        .bk-bar-fill { height:100%; border-radius:3px; background:var(--gradient); animation:barGrow .8s ease forwards; }
+        .bk-value { font-weight:700; font-size:14px; min-width:55px; text-align:right; }
+
+        /* ===== SAVING PLAN ===== */
+        .saving-box {
+            background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.15);
+            border-radius:14px; padding:14px; margin-bottom:16px;
+        }
+        .saving-title { font-weight:700; font-size:14px; margin-bottom:8px; }
+        .saving-grid { display:flex; gap:8px; }
+        .saving-item {
+            flex:1; text-align:center; padding:8px 4px;
+            background:rgba(255,255,255,.04); border-radius:10px;
+        }
+        .saving-pct { font-size:11px; opacity:.5; }
+        .saving-months { font-size:18px; font-weight:800; color:var(--green); }
+        .saving-unit { font-size:10px; opacity:.4; }
+        .saving-amt { font-size:9px; opacity:.3; }
+
+        /* ===== TIP ===== */
+        .tip-box {
+            background:rgba(251,191,36,.08); border:1px solid rgba(251,191,36,.15);
+            border-radius:14px; padding:14px; margin-bottom:16px;
+        }
+        .tip-title { font-weight:700; font-size:13px; margin-bottom:4px; }
+        .tip-text { font-size:12px; opacity:.7; line-height:1.5; }
+
+        /* ===== COMPARE ===== */
+        .compare-toggle {
+            width:100%; background:rgba(255,255,255,.04);
+            border:1px solid rgba(255,255,255,.08); border-radius:14px;
+            padding:12px; color:#a78bfa; font-weight:600; font-size:14px;
+            cursor:pointer; font-family:inherit; margin-bottom:12px;
+        }
+        .compare-box {
+            background:rgba(255,255,255,.03); border:1px solid var(--border);
+            border-radius:14px; padding:12px; margin-bottom:16px;
+        }
+        .cmp-row {
+            display:flex; align-items:center; gap:8px; padding:8px 0;
+            border-bottom:1px solid rgba(255,255,255,.04);
+        }
+        .cmp-row:last-child { border-bottom:none }
+        .cmp-flag { font-size:16px; }
+        .cmp-name { font-size:12px; flex:1; min-width:60px; }
+        .cmp-bar { flex:2; height:6px; border-radius:3px; background:rgba(255,255,255,.06); overflow:hidden; }
+        .cmp-bar-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+        .cmp-price { font-size:12px; min-width:50px; text-align:right; }
+        .cmp-row.current { opacity:1; font-weight:700; }
+        .cmp-row.other { opacity:.5; }
+
+        /* ===== CTA ===== */
+        .cta-link {
+            display:block; width:100%; background:var(--gradient-tg);
+            border:none; border-radius:16px; padding:16px;
+            color:#fff; font-weight:700; font-size:16px; text-align:center;
+            cursor:pointer; text-decoration:none; margin-bottom:4px;
+            position:relative; overflow:hidden;
+        }
+        .cta-link::after {
+            content:''; position:absolute; inset:-2px;
+            background:linear-gradient(45deg, var(--accent2), var(--accent1), #f43f5e, var(--accent2));
+            background-size:300% 300%;
+            z-index:-1; border-radius:inherit;
+            animation: shimmer 3s linear infinite;
+            filter:blur(6px); opacity:.6;
+        }
+        .cta-inner { display:flex; align-items:center; justify-content:center; gap:8px; position:relative; z-index:1; }
+        .cta-sub { text-align:center; font-size:12px; opacity:.4; margin-bottom:16px; }
+
+        .bottom-row { display:flex; gap:8px; }
+        .bottom-btn {
+            flex:1; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+            border-radius:14px; padding:12px; color:#a78bfa; font-weight:600;
+            font-size:14px; cursor:pointer; font-family:inherit;
+        }
+        .bottom-btn:active { transform:scale(.95) }
+
+        /* ===== INTRO ===== */
+        .intro { text-align:center; padding-top:40px; }
+        .intro-globe { font-size:80px; margin-bottom:20px; animation:pulse 2s ease infinite; }
+        .intro-title {
+            font-size:28px; font-weight:800; margin-bottom:8px;
+            background:linear-gradient(135deg, #fff, #a78bfa);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .intro-desc { opacity:.5; font-size:14px; margin-bottom:32px; line-height:1.5; }
+        .intro-btn {
+            background:var(--gradient); border:none; border-radius:16px;
+            padding:16px 48px; color:#fff; font-size:18px; font-weight:700;
+            cursor:pointer; font-family:inherit; position:relative; z-index:1;
+        }
+        .intro-btn:active { transform:scale(.95) }
+        .intro-note {
+            margin-top:40px; padding:16px;
+            background:rgba(255,255,255,.04); border-radius:12px;
+            border:1px solid rgba(255,255,255,.06);
+        }
+        .intro-note p { font-size:12px; opacity:.4; margin:0; }
+
+        /* hide step */
+        .step { display:none; }
+        .step.active { display:block; }
+    </style>
+</head>
+<body>
+
+<div class="bg-particles" id="bgParticles"></div>
+
+<div class="container">
+    <!-- HEADER -->
+    <div class="header">
+        <div>
+            <h1 class="logo">✈️ <span id="hTitle">Sayohat Kalkulyator</span></h1>
+            <p class="subtitle" id="hSub">Qancha turadi sayohatingiz?</p>
+        </div>
+        <button class="lang-btn" id="langBtn" onclick="toggleLang()">RU</button>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="progress" id="progressBar" style="display:none">
+        <div class="progress-dot" id="pd1"></div>
+        <div class="progress-dot" id="pd2"></div>
+        <div class="progress-dot" id="pd3"></div>
+        <div class="progress-dot" id="pd4"></div>
+    </div>
+
+    <!-- STEP 0: INTRO -->
+    <div class="step active" id="step0">
+        <div class="intro slide">
+            <div class="intro-globe">🌍</div>
+            <h2 class="intro-title" id="introTitle">Qancha turadi sayohatingiz?</h2>
+            <p class="intro-desc" id="introDesc">Real narxlar asosida sayohat byudjetingizni hisoblang. Toshkentdan parvoz, mehmonxona, ovqat va ko'ngilochar — hamma narsa!</p>
+            <button class="intro-btn" onclick="goStep(1)" id="introBtn">Boshlash →</button>
+            <div class="intro-note">
+                <p id="introNote">📊 O'zbekistonda o'rtacha oylik: ~$507/oy (~6.4 mln so'm)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP 1: COUNTRY -->
+    <div class="step" id="step1"></div>
+
+    <!-- STEP 2: STYLE + DURATION -->
+    <div class="step" id="step2"></div>
+
+    <!-- STEP 3: FOOD + FUN -->
+    <div class="step" id="step3"></div>
+
+    <!-- STEP 4: RESULTS -->
+    <div class="step" id="step4"></div>
+</div>
+
+<script>
+// ===== DATA =====
+const COUNTRIES = [
+    { id:"turkey", flag:"🇹🇷", name:{uz:"Turkiya",ru:"Турция"}, visa:false, pop:true },
+    { id:"uae", flag:"🇦🇪", name:{uz:"BAA (Dubay)",ru:"ОАЭ (Дубай)"}, visa:false, pop:true },
+    { id:"thailand", flag:"🇹🇭", name:{uz:"Tayland",ru:"Таиланд"}, visa:false, pop:true },
+    { id:"egypt", flag:"🇪🇬", name:{uz:"Misr",ru:"Египет"}, visa:true, pop:true },
+    { id:"vietnam", flag:"🇻🇳", name:{uz:"Vyetnam",ru:"Вьетнам"}, visa:true, pop:false },
+    { id:"malaysia", flag:"🇲🇾", name:{uz:"Malayziya",ru:"Малайзия"}, visa:false, pop:false },
+    { id:"indonesia", flag:"🇮🇩", name:{uz:"Indoneziya (Bali)",ru:"Индонезия (Бали)"}, visa:false, pop:false },
+    { id:"maldives", flag:"🇲🇻", name:{uz:"Maldiv",ru:"Мальдивы"}, visa:false, pop:false },
+    { id:"georgia", flag:"🇬🇪", name:{uz:"Gruziya",ru:"Грузия"}, visa:false, pop:false },
+    { id:"china", flag:"🇨🇳", name:{uz:"Xitoy",ru:"Китай"}, visa:true, pop:false },
+];
+
+// Prices [backpacker, standard, premium, luxury] in USD from Tashkent
+const PRICES = {
+    turkey:    { flight:[250,300,500,800],   hotel:[25,55,120,300],  food:[10,20,40,80],  fun:[5,15,35,70],   visa:0,  ins:2 },
+    uae:       { flight:[300,350,600,1200],  hotel:[40,80,180,500],  food:[15,30,60,150], fun:[10,25,50,100], visa:0,  ins:2 },
+    thailand:  { flight:[350,400,700,1500],  hotel:[15,40,100,350],  food:[8,15,35,80],   fun:[5,15,30,60],   visa:0,  ins:2 },
+    egypt:     { flight:[300,350,550,1000],  hotel:[20,45,100,250],  food:[8,18,35,70],   fun:[5,15,30,60],   visa:25, ins:2 },
+    vietnam:   { flight:[400,450,750,1500],  hotel:[10,30,80,250],   food:[5,12,30,70],   fun:[3,10,25,50],   visa:25, ins:2 },
+    malaysia:  { flight:[380,420,700,1400],  hotel:[15,40,100,300],  food:[8,15,35,80],   fun:[5,12,30,60],   visa:0,  ins:2 },
+    indonesia: { flight:[400,450,800,1600],  hotel:[12,35,100,400],  food:[6,15,35,80],   fun:[5,12,25,60],   visa:0,  ins:2 },
+    maldives:  { flight:[450,500,800,1500],  hotel:[50,100,250,800], food:[15,30,60,150], fun:[10,25,50,100], visa:0,  ins:3 },
+    georgia:   { flight:[200,250,400,700],   hotel:[15,35,80,200],   food:[8,15,30,60],   fun:[3,10,20,40],   visa:0,  ins:1.5 },
+    china:     { flight:[300,350,600,1200],  hotel:[15,40,100,300],  food:[5,15,35,80],   fun:[5,12,25,60],   visa:50, ins:2 },
+};
+
+const TIPS = {
+    uz: {
+        turkey:"Turkiyaga vizasiz 90 kun! Antalya'da all-inclusive $35/kunga topiladi",
+        uae:"Dubayda metro bilan ko'p joyni ko'rish mumkin — taksi shart emas",
+        thailand:"Tayland vizasi aeroportda — 14 kun bepul!",
+        egypt:"Sharm el-Sheikh'da all-inclusive eng arzon variant",
+        vietnam:"Vyetnam — eng arzon Osiyo yo'nalishi, $20/kunga yashash mumkin",
+        malaysia:"Malayziya vizasiz 30 kun, Langkawi — duty free orol!",
+        indonesia:"Bali vizasiz 30 kun, skuter ijarasi $5/kun",
+        maldives:"Maldivda guesthouse $50/kecha — resort shart emas",
+        georgia:"Gruziya vizasiz 1 yil! Eng yaqin arzon yo'nalish",
+        china:"Xitoyga tranzit vizasiz 144 soat — Pekinni ko'ring!"
+    },
+    ru: {
+        turkey:"В Турцию без визы на 90 дней! All-inclusive в Анталье от $35/день",
+        uae:"В Дубае метро покрывает все туристические места — такси не обязательно",
+        thailand:"Виза Таиланда в аэропорту — 14 дней бесплатно!",
+        egypt:"Шарм-эль-Шейх all-inclusive — самый бюджетный вариант",
+        vietnam:"Вьетнам — самое дешёвое направление в Азии, $20/день на жильё",
+        malaysia:"Малайзия без визы 30 дней, Лангкави — остров duty free!",
+        indonesia:"Бали без визы 30 дней, скутер $5/день",
+        maldives:"На Мальдивах гестхаус от $50/ночь — не обязательно в резорт",
+        georgia:"Грузия без визы на год! Ближайшее бюджетное направление",
+        china:"Транзит через Китай без визы 144 часа — успеете увидеть Пекин!"
+    }
+};
+
+const T = {
+    uz: {
+        title:"Sayohat Kalkulyator", sub:"Qancha turadi sayohatingiz?",
+        start:"Boshlash", next:"Keyingi", back:"Orqaga", result:"Natija",
+        selectCountry:"Davlatni tanlang", directFlights:"Toshkentdan to'g'ridan-to'g'ri parvozlar mavjud",
+        noVisa:"Vizasiz", needVisa:"Viza kerak", from:"dan",
+        selectStyle:"Sayohat uslubini tanlang", selectDur:"Necha kun?", days:"kun",
+        styles:["Backpacker","Standart","Premium","Hashamat"],
+        styleDesc:["Xostel, avtobus, street food","3★ mehmonxona, taksi, restoran","4-5★ mehmonxona, business class","Lyuks resort, VIP xizmat"],
+        selectFood:"Ovqatlanish uslubi", selectFun:"Ko'ngilochar",
+        foods:["Street food","Aralash","Restoranlar","Fine dining"],
+        funs:["Minimal","O'rtacha","Faol","Hammasi"],
+        flight:"Parvoz", hotel:"Mehmonxona", food:"Ovqat", fun:"Ko'ngilochar",
+        visa:"Viza", insurance:"Sug'urta", total:"Jami",
+        affordable:"Arzon", moderate:"O'rtacha", expensive:"Qimmat", veryExpensive:"Juda qimmat",
+        salaryMonths:"oylik maosh", youngSpec:"yosh mutaxassis",
+        savingPlan:"Jamg'arish rejasi", months:"oy",
+        tip:"Maslahat", comparison:"Taqqoslash", compareSub:"shu sozlamalar bilan boshqa davlatlar",
+        cta:"Kanalga obuna bo'lish", ctaSub:"Arzon sayohat sirlari va yo'riqnomalar",
+        restart:"Qaytadan", otherCountry:"Boshqa davlat",
+        introDesc:"Real narxlar asosida sayohat byudjetingizni hisoblang. Toshkentdan parvoz, mehmonxona, ovqat va ko'ngilochar — hamma narsa!",
+        salaryNote:"O'zbekistonda o'rtacha oylik: ~$507/oy (~6.4 mln so'm)",
+        perDay:"kun",
+    },
+    ru: {
+        title:"Калькулятор Путешествий", sub:"Сколько стоит ваша поездка?",
+        start:"Начать", next:"Далее", back:"Назад", result:"Результат",
+        selectCountry:"Выберите страну", directFlights:"Прямые рейсы из Ташкента",
+        noVisa:"Без визы", needVisa:"Нужна виза", from:"от",
+        selectStyle:"Стиль путешествия", selectDur:"Сколько дней?", days:"дней",
+        styles:["Бэкпекер","Стандарт","Премиум","Люкс"],
+        styleDesc:["Хостел, автобус, стрит-фуд","3★ отель, такси, рестораны","4-5★ отель, бизнес-класс","Люкс-резорт, VIP сервис"],
+        selectFood:"Стиль питания", selectFun:"Развлечения",
+        foods:["Стрит-фуд","Смешанный","Рестораны","Fine dining"],
+        funs:["Минимум","Умеренно","Активно","Всё включено"],
+        flight:"Перелёт", hotel:"Отель", food:"Еда", fun:"Развлечения",
+        visa:"Виза", insurance:"Страховка", total:"Итого",
+        affordable:"Доступно", moderate:"Средне", expensive:"Дорого", veryExpensive:"Очень дорого",
+        salaryMonths:"зарплат", youngSpec:"молодой специалист",
+        savingPlan:"План накоплений", months:"мес",
+        tip:"Совет", comparison:"Сравнение", compareSub:"другие страны с такими же настройками",
+        cta:"Подписаться на канал", ctaSub:"Секреты бюджетных путешествий и гайды",
+        restart:"Заново", otherCountry:"Другая страна",
+        introDesc:"Рассчитайте бюджет поездки на основе реальных цен. Перелёт из Ташкента, отель, еда и развлечения — всё включено!",
+        salaryNote:"Средняя зарплата в Узбекистане: ~$507/мес (~6.4 млн сум)",
+        perDay:"д",
+    }
+};
+
+const STYLE_EMOJI = ["🎒","✈️","💎","👑"];
+const FOOD_EMOJI = ["🌯","🍽️","🥂","🍾"];
+const FUN_EMOJI = ["📸","🎯","🎢","🌟"];
+const BK_EMOJI = ["✈️","🏨","🍽️","🎡","📋","🛡️"];
+
+// ===== STATE =====
+let lang = "uz";
+let currentStep = 0;
+let country = null;
+let style = 1;
+let days = 7;
+let foodStyle = 1;
+let funStyle = 1;
+let showCompare = false;
+
+const AVG_SALARY_USD = 507;
+const YOUNG_FACTOR = 0.6;
+
+// ===== TG =====
+let tg = null;
+try {
+    tg = window.Telegram?.WebApp;
+    if (tg) {
+        tg.ready();
+        tg.expand();
+        tg.enableClosingConfirmation();
+        tg.BackButton.onClick(() => {
+            if (currentStep > 0) goStep(currentStep - 1);
+        });
+    }
+} catch(e) {}
+
+function haptic(type) {
+    try { tg?.HapticFeedback?.impactOccurred?.(type || 'light'); } catch(e) {}
+}
+
+// ===== PARTICLES =====
+(function initParticles() {
+    const c = document.getElementById('bgParticles');
+    for (let i = 0; i < 20; i++) {
+        const d = document.createElement('div');
+        d.className = 'particle';
+        const s = 4 + Math.random() * 6;
+        d.style.cssText = `
+            width:${s}px; height:${s}px;
+            background:hsl(${200+Math.random()*60},80%,${50+Math.random()*30}%);
+            opacity:${.15+Math.random()*.2};
+            left:${Math.random()*100}%; top:${Math.random()*100}%;
+            --dur:${5+Math.random()*10}s; --delay:${Math.random()*5}s;
+        `;
+        c.appendChild(d);
+    }
+})();
+
+// ===== HELPERS =====
+function $(id) { return document.getElementById(id); }
+function fUSD(n) { return "$" + Math.round(n).toLocaleString(); }
+function fUZS(usd) {
+    const u = Math.round(usd * 12580);
+    return u >= 1e6 ? (Math.round(u/1e5)/10) + " mln" : Math.round(u/1e3) + "k";
+}
+function t() { return T[lang]; }
+
+function calc(cid, si, d, fi, fui) {
+    const p = PRICES[cid]; if (!p) return null;
+    const fl = p.flight[si], ho = p.hotel[si]*d, fo = p.food[fi]*d,
+          fu = p.fun[fui]*d, vi = p.visa, ins = p.ins*d;
+    return { flight:fl, hotel:ho, food:fo, fun:fu, visa:vi, insurance:ins, total:fl+ho+fo+fu+vi+ins };
+}
+
+function priceTag(months) {
+    if (months <= 1) return { label:t().affordable, color:"#22c55e", emoji:"🟢" };
+    if (months <= 2.5) return { label:t().moderate, color:"#f59e0b", emoji:"🟡" };
+    if (months <= 5) return { label:t().expensive, color:"#f97316", emoji:"🟠" };
+    return { label:t().veryExpensive, color:"#ef4444", emoji:"🔴" };
+}
+
+// ===== NAVIGATION =====
+function goStep(n) {
+    haptic('light');
+    currentStep = n;
+
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    $('step' + n).classList.add('active');
+
+    // progress
+    const pb = $('progressBar');
+    pb.style.display = n > 0 && n < 5 ? 'flex' : 'none';
+    for (let i = 1; i <= 4; i++) {
+        $('pd' + i).className = 'progress-dot' + (i <= n ? ' active' : '');
+    }
+
+    // TG back button
+    if (tg) {
+        if (n > 0) tg.BackButton.show(); else tg.BackButton.hide();
+    }
+
+    // render step
+    if (n === 1) renderStep1();
+    if (n === 2) renderStep2();
+    if (n === 3) renderStep3();
+    if (n === 4) renderStep4();
+}
+
+function toggleLang() {
+    lang = lang === 'uz' ? 'ru' : 'uz';
+    haptic('light');
+    $('langBtn').textContent = lang === 'uz' ? 'RU' : 'UZ';
+    $('hTitle').textContent = t().title;
+    $('hSub').textContent = t().sub;
+
+    // re-render intro
+    $('introTitle').textContent = t().sub;
+    $('introDesc').textContent = t().introDesc;
+    $('introBtn').textContent = t().start + ' →';
+    $('introNote').textContent = '📊 ' + t().salaryNote;
+
+    // re-render current step
+    if (currentStep > 0) goStep(currentStep);
+}
+
+// ===== STEP 1: COUNTRY =====
+function renderStep1() {
+    const s = $('step1');
+    let h = `<div class="slide">
+        <h2 class="step-title">${t().selectCountry}</h2>
+        <p class="step-hint">${t().directFlights}</p>
+        <div class="country-grid">`;
+
+    COUNTRIES.forEach((c, i) => {
+        const sel = country === c.id ? ' selected' : '';
+        const visa = c.visa ? '📋 ' + t().needVisa : '✅ ' + t().noVisa;
+        const hot = c.pop ? ' • 🔥' : '';
+        h += `<button class="card country-card slide slide-d${i+1}${sel}" onclick="selectCountry('${c.id}')">
+            <div class="country-row">
+                <span class="country-flag">${c.flag}</span>
+                <div>
+                    <div class="country-name">${c.name[lang]}</div>
+                    <div class="country-meta">${visa}${hot}</div>
+                </div>
+            </div>
+            <div class="country-price">${t().from} ${fUSD(PRICES[c.id].flight[0])} ✈️</div>
+        </button>`;
+    });
+    h += '</div></div>';
+    s.innerHTML = h;
+}
+
+function selectCountry(id) {
+    country = id;
+    haptic('medium');
+    goStep(2);
+}
+
+// ===== STEP 2: STYLE + DURATION =====
+function renderStep2() {
+    const s = $('step2');
+    let h = `<div class="slide">
+        <h2 class="step-title">${t().selectStyle}</h2>
+        <div class="style-list">`;
+
+    for (let i = 0; i < 4; i++) {
+        const sel = style === i ? ' selected' : '';
+        const pr = country ? `<div class="style-price">~${fUSD(PRICES[country].hotel[i])}<small>/🌙</small></div>` : '';
+        h += `<button class="card style-card slide slide-d${i+1}${sel}" onclick="setStyle(${i})">
+            <span class="style-emoji">${STYLE_EMOJI[i]}</span>
+            <div class="style-info">
+                <div class="style-label">${t().styles[i]}</div>
+                <div class="style-desc">${t().styleDesc[i]}</div>
+            </div>
+            ${pr}
+        </button>`;
+    }
+
+    h += `</div><h3 class="step-title" style="font-size:16px;margin-bottom:10px">${t().selectDur}</h3><div class="dur-row">`;
+    [5,7,10,14,21].forEach(d => {
+        h += `<button class="dur-btn${days===d?' selected':''}" onclick="setDays(${d})">${d} ${t().days}</button>`;
+    });
+
+    h += `</div>
+        <div class="nav-row">
+            <button class="btn-back" onclick="goStep(1)">← ${t().back}</button>
+            <button class="btn-next" onclick="goStep(3)">${t().next} →</button>
+        </div>
+    </div>`;
+    s.innerHTML = h;
+}
+
+function setStyle(i) { style = i; haptic('light'); renderStep2(); }
+function setDays(d) { days = d; haptic('light'); renderStep2(); }
+
+// ===== STEP 3: FOOD + FUN =====
+function renderStep3() {
+    const s = $('step3');
+    let h = `<div class="slide">
+        <h2 class="step-title">${t().selectFood}</h2>
+        <div class="options-row">`;
+
+    for (let i = 0; i < 4; i++) {
+        const sel = foodStyle === i ? ' selected' : '';
+        const pr = country ? `<div class="opt-price">${fUSD(PRICES[country].food[i])}/${t().perDay}</div>` : '';
+        h += `<button class="opt-btn${sel}" onclick="setFood(${i})">
+            <div class="opt-emoji">${FOOD_EMOJI[i]}</div>
+            <div class="opt-label">${t().foods[i]}</div>
+            ${pr}
+        </button>`;
+    }
+
+    h += `</div><h2 class="step-title">${t().selectFun}</h2><div class="options-row">`;
+
+    for (let i = 0; i < 4; i++) {
+        const sel = funStyle === i ? ' selected' : '';
+        const pr = country ? `<div class="opt-price">${fUSD(PRICES[country].fun[i])}/${t().perDay}</div>` : '';
+        h += `<button class="opt-btn${sel}" onclick="setFun(${i})">
+            <div class="opt-emoji">${FUN_EMOJI[i]}</div>
+            <div class="opt-label">${t().funs[i]}</div>
+            ${pr}
+        </button>`;
+    }
+
+    h += `</div>
+        <div class="nav-row">
+            <button class="btn-back" onclick="goStep(2)">← ${t().back}</button>
+            <button class="btn-next" onclick="goStep(4)">${t().result} →</button>
+        </div>
+    </div>`;
+    s.innerHTML = h;
+}
+
+function setFood(i) { foodStyle = i; haptic('light'); renderStep3(); }
+function setFun(i) { funStyle = i; haptic('light'); renderStep3(); }
+
+// ===== STEP 4: RESULTS =====
+function renderStep4() {
+    showCompare = false;
+    const r = calc(country, style, days, foodStyle, funStyle);
+    if (!r) return;
+
+    const c = COUNTRIES.find(x => x.id === country);
+    const youngSalary = AVG_SALARY_USD * YOUNG_FACTOR;
+    const salMo = (r.total / youngSalary).toFixed(1);
+    const tag = priceTag(parseFloat(salMo));
+
+    const bkLabels = [t().flight, t().hotel, t().food, t().fun, t().visa, t().insurance];
+    const bkVals = [r.flight, r.hotel, r.food, r.fun, r.visa, r.insurance];
+
+    let h = `<div class="slide">
+        <!-- HERO -->
+        <div class="result-hero">
+            <div class="result-country">${c.flag} ${c.name[lang]} • ${days} ${t().days}</div>
+            <div class="result-total">${fUSD(r.total)}</div>
+            <div class="result-uzs">≈ ${fUZS(r.total)} so'm</div>
+            <div class="result-tag">
+                <span style="font-size:20px">${tag.emoji}</span>
+                <span class="tag-label" style="color:${tag.color}">${tag.label}</span>
+                <span style="opacity:.4;font-size:12px">•</span>
+                <span class="tag-detail">${salMo} ${t().salaryMonths} (${t().youngSpec})</span>
+            </div>
+        </div>
+
+        <!-- BREAKDOWN -->
+        <div class="breakdown">`;
+
+    bkVals.forEach((v, i) => {
+        if (v <= 0) return;
+        const pct = (v / r.total * 100).toFixed(0);
+        h += `<div class="bk-row">
+            <span class="bk-emoji">${BK_EMOJI[i]}</span>
+            <span class="bk-label">${bkLabels[i]}</span>
+            <div class="bk-bar"><div class="bk-bar-fill" style="width:${pct}%;animation-delay:${i*.1}s"></div></div>
+            <span class="bk-value">${fUSD(v)}</span>
+        </div>`;
+    });
+
+    h += `</div>
+
+        <!-- SAVING PLAN -->
+        <div class="saving-box">
+            <div class="saving-title">💰 ${t().savingPlan}</div>
+            <div class="saving-grid">`;
+
+    [10,15,20,30].forEach(pct => {
+        const monthly = youngSalary * (pct / 100);
+        const mos = Math.ceil(r.total / monthly);
+        h += `<div class="saving-item">
+            <div class="saving-pct">${pct}%</div>
+            <div class="saving-months">${mos}</div>
+            <div class="saving-unit">${t().months}</div>
+            <div class="saving-amt">${fUSD(monthly)}/${lang==='uz'?'oy':'мес'}</div>
+        </div>`;
+    });
+
+    h += `</div></div>`;
+
+    // TIP
+    const tip = TIPS[lang][country];
+    if (tip) {
+        h += `<div class="tip-box">
+            <div class="tip-title">💡 ${t().tip}</div>
+            <div class="tip-text">${tip}</div>
+        </div>`;
+    }
+
+    // COMPARE TOGGLE
+    h += `<button class="compare-toggle" id="cmpToggle" onclick="toggleCompare()">
+        ▼ ${t().comparison} — ${t().compareSub}
+    </button>
+    <div id="compareBox" style="display:none"></div>`;
+
+    // CTA
+    h += `<a href="https://t.me/nomadsclan" target="_blank" rel="noopener noreferrer" class="cta-link">
+        <span class="cta-inner">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.492-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+            ${t().cta}
+        </span>
+    </a>
+    <p class="cta-sub">@nomadsclan • ${t().ctaSub}</p>
+
+    <div class="bottom-row">
+        <button class="bottom-btn" onclick="goStep(0)">🔄 ${t().restart}</button>
+        <button class="bottom-btn" onclick="goStep(1)">🌍 ${t().otherCountry}</button>
+    </div>
+    </div>`;
+
+    $('step4').innerHTML = h;
+    haptic('success');
+}
+
+function toggleCompare() {
+    showCompare = !showCompare;
+    haptic('light');
+    const box = $('compareBox');
+    const btn = $('cmpToggle');
+
+    if (!showCompare) {
+        box.style.display = 'none';
+        btn.textContent = `▼ ${t().comparison} — ${t().compareSub}`;
+        return;
+    }
+
+    btn.textContent = `▲ ${t().comparison} — ${t().compareSub}`;
+
+    const all = COUNTRIES.map(c => ({
+        ...c, result: calc(c.id, style, days, foodStyle, funStyle)
+    })).sort((a,b) => a.result.total - b.result.total);
+
+    const maxT = all[all.length - 1].result.total;
+
+    let h = '<div class="compare-box">';
+    all.forEach(c => {
+        const isCur = c.id === country;
+        const pct = (c.result.total / maxT * 100).toFixed(0);
+        const bg = isCur ? 'background:var(--gradient)' : 'background:rgba(255,255,255,.15)';
+        h += `<div class="cmp-row ${isCur ? 'current' : 'other'}">
+            <span class="cmp-flag">${c.flag}</span>
+            <span class="cmp-name">${c.name[lang]}</span>
+            <div class="cmp-bar"><div class="cmp-bar-fill" style="width:${pct}%;${bg}"></div></div>
+            <span class="cmp-price">${fUSD(c.result.total)}</span>
+        </div>`;
+    });
+    h += '</div>';
+    box.innerHTML = h;
+    box.style.display = 'block';
+}
+</script>
+</body>
+</html>
