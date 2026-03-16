@@ -470,43 +470,115 @@ const AIRPORTS = {
     ]
 };
 
-const DEST_IATA = {turkey:"IST",uae:"DXB",thailand:"BKK",egypt:"HRG",vietnam:"SGN",malaysia:"KUL",indonesia:"DPS",maldives:"MLE",georgia:"TBS",china:"PEK"};
+// ===== 40 DESTINATIONS =====
+const DESTS = [
+// region: 0=popular, 1=europe, 2=asia, 3=middle_east, 4=cis
+{iata:"IST",f:"🇹🇷",n:{uz:"Stambul",ru:"Стамбул"},r:0,v:0,dr:1},
+{iata:"AYT",f:"🇹🇷",n:{uz:"Antalya",ru:"Анталья"},r:0,v:0,dr:1},
+{iata:"DXB",f:"🇦🇪",n:{uz:"Dubay",ru:"Дубай"},r:0,v:0,dr:1},
+{iata:"SHJ",f:"🇦🇪",n:{uz:"Sharja",ru:"Шарджа"},r:3,v:0,dr:1},
+{iata:"BKK",f:"🇹🇭",n:{uz:"Bangkok",ru:"Бангкок"},r:0,v:0,dr:1},
+{iata:"HKT",f:"🇹🇭",n:{uz:"Phuket",ru:"Пхукет"},r:2,v:0,dr:1},
+{iata:"HRG",f:"🇪🇬",n:{uz:"Xurgada",ru:"Хургада"},r:0,v:1,dr:0},
+{iata:"SSH",f:"🇪🇬",n:{uz:"Sharm el-Sheikh",ru:"Шарм-эль-Шейх"},r:3,v:1,dr:0},
+{iata:"KUL",f:"🇲🇾",n:{uz:"Kuala Lumpur",ru:"Куала-Лумпур"},r:2,v:0,dr:0},
+{iata:"DPS",f:"🇮🇩",n:{uz:"Bali",ru:"Бали"},r:0,v:0,dr:1},
+{iata:"SGN",f:"🇻🇳",n:{uz:"Xoshimin",ru:"Хошимин"},r:2,v:1,dr:0},
+{iata:"HAN",f:"🇻🇳",n:{uz:"Xanoy",ru:"Ханой"},r:2,v:1,dr:0},
+{iata:"MLE",f:"🇲🇻",n:{uz:"Maldiv",ru:"Мальдивы"},r:2,v:0,dr:0},
+{iata:"TBS",f:"🇬🇪",n:{uz:"Tbilisi",ru:"Тбилиси"},r:0,v:0,dr:0},
+{iata:"PEK",f:"🇨🇳",n:{uz:"Pekin",ru:"Пекин"},r:2,v:1,dr:1},
+{iata:"CAN",f:"🇨🇳",n:{uz:"Guanchjou",ru:"Гуанчжоу"},r:2,v:1,dr:1},
+{iata:"PVG",f:"🇨🇳",n:{uz:"Shanxay",ru:"Шанхай"},r:2,v:1,dr:1},
+{iata:"ICN",f:"🇰🇷",n:{uz:"Seul",ru:"Сеул"},r:2,v:1,dr:1},
+{iata:"DEL",f:"🇮🇳",n:{uz:"Dehli",ru:"Дели"},r:2,v:1,dr:1},
+{iata:"BOM",f:"🇮🇳",n:{uz:"Mumbay",ru:"Мумбаи"},r:2,v:1,dr:1},
+{iata:"TLV",f:"🇮🇱",n:{uz:"Tel Aviv",ru:"Тель-Авив"},r:3,v:1,dr:1},
+{iata:"DOH",f:"🇶🇦",n:{uz:"Doha",ru:"Доха"},r:3,v:0,dr:0},
+{iata:"KWI",f:"🇰🇼",n:{uz:"Quvayt",ru:"Кувейт"},r:3,v:1,dr:1},
+{iata:"JED",f:"🇸🇦",n:{uz:"Jidda",ru:"Джидда"},r:3,v:1,dr:1},
+{iata:"MOW",f:"🇷🇺",n:{uz:"Moskva",ru:"Москва"},r:4,v:0,dr:1},
+{iata:"LED",f:"🇷🇺",n:{uz:"Sankt-Peterburg",ru:"Санкт-Петербург"},r:4,v:0,dr:1},
+{iata:"ALA",f:"🇰🇿",n:{uz:"Olma-Ota",ru:"Алматы"},r:4,v:0,dr:1},
+{iata:"TSE",f:"🇰🇿",n:{uz:"Astana",ru:"Астана"},r:4,v:0,dr:1},
+{iata:"FRU",f:"🇰🇬",n:{uz:"Bishkek",ru:"Бишкек"},r:4,v:0,dr:1},
+{iata:"DYU",f:"🇹🇯",n:{uz:"Dushanbe",ru:"Душанбе"},r:4,v:0,dr:1},
+{iata:"MXP",f:"🇮🇹",n:{uz:"Milan",ru:"Милан"},r:1,v:1,dr:1},
+{iata:"FCO",f:"🇮🇹",n:{uz:"Rim",ru:"Рим"},r:1,v:1,dr:1},
+{iata:"FRA",f:"🇩🇪",n:{uz:"Frankfurt",ru:"Франкфурт"},r:1,v:1,dr:1},
+{iata:"CDG",f:"🇫🇷",n:{uz:"Parij",ru:"Париж"},r:1,v:1,dr:0},
+{iata:"MAD",f:"🇪🇸",n:{uz:"Madrid",ru:"Мадрид"},r:1,v:1,dr:1},
+{iata:"LHR",f:"🇬🇧",n:{uz:"London",ru:"Лондон"},r:1,v:1,dr:0},
+{iata:"NRT",f:"🇯🇵",n:{uz:"Tokio",ru:"Токио"},r:2,v:1,dr:0},
+{iata:"SIN",f:"🇸🇬",n:{uz:"Singapur",ru:"Сингапур"},r:2,v:0,dr:0},
+{iata:"CMB",f:"🇱🇰",n:{uz:"Kolombo",ru:"Коломбо"},r:2,v:0,dr:0},
+{iata:"GYD",f:"🇦🇿",n:{uz:"Boku",ru:"Баку"},r:4,v:0,dr:1},
+];
+
+const REGIONS = {
+uz:["🔥 Mashhur","🌍 Yevropa","🌏 Osiyo","🕌 Yaqin Sharq","🤝 MDH"],
+ru:["🔥 Популярные","🌍 Европа","🌏 Азия","🕌 Бл. Восток","🤝 СНГ"]
+};
+
+let flFilter = 'all'; // all, 0,1,2,3,4
 
 function r7(){
     $('prog').style.display='none';
-    let h=`<div class="sl"><h2 class="ttl">${t().m4}</h2><p class="hint">${t().searchDest}</p>
-    <div class="c-grid" style="margin-bottom:20px">`;
-    C.forEach((c,i)=>{
-        h+=`<div class="c-card sl sl${i+1}" onclick="searchFlights('${c.id}')" style="text-align:center;padding:12px">
-            <span style="font-size:28px">${c.f}</span>
-            <div style="font-weight:700;font-size:13px;margin-top:4px">${c.n[L]}</div>
-            <div style="font-size:10px;color:var(--dim);margin-top:2px">${DEST_IATA[c.id]}</div>
+    const regs = REGIONS[L];
+    let h=`<div class="sl"><h2 class="ttl">${t().m4}</h2><p class="hint">${t().searchDest} • 40 ${L==='uz'?'ta yo\'nalish':'направлений'}</p>
+    
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;-webkit-overflow-scrolling:touch">
+        <button class="dbtn${flFilter==='all'?' sel':''}" onclick="flFilter='all';r7()" style="white-space:nowrap;font-size:12px;padding:8px 14px">${L==='uz'?'Hammasi':'Все'}</button>`;
+    
+    for(let i=0;i<5;i++){
+        h+=`<button class="dbtn${flFilter==String(i)?' sel':''}" onclick="flFilter='${i}';r7()" style="white-space:nowrap;font-size:12px;padding:8px 14px">${regs[i]}</button>`;
+    }
+    h+=`<button class="dbtn${flFilter==='nv'?' sel':''}" onclick="flFilter='nv';r7()" style="white-space:nowrap;font-size:12px;padding:8px 14px">✅ ${t().nv}</button>`;
+    h+=`</div>`;
+    
+    const filtered = DESTS.filter(d=>{
+        if(flFilter==='all') return true;
+        if(flFilter==='nv') return d.v===0;
+        return d.r===parseInt(flFilter);
+    });
+    
+    h+=`<div class="c-grid" style="margin-bottom:16px">`;
+    filtered.forEach((d,i)=>{
+        const vi = d.v ? `<span class="badge badge-visa" style="font-size:8px">${t().yv}</span>` : `<span class="badge badge-free" style="font-size:8px">${t().nv}</span>`;
+        const direct = d.dr ? '✈️' : '🔄';
+        h+=`<div class="c-card sl sl${Math.min(i+1,10)}" onclick="searchFlights('${d.iata}','${d.n[L]}','${d.f}')" style="text-align:center;padding:10px 8px">
+            <span style="font-size:26px">${d.f}</span>
+            <div style="font-weight:700;font-size:12px;margin-top:3px">${d.n[L]}</div>
+            <div style="font-size:9px;color:var(--dim);margin-top:2px">${d.iata} ${direct}</div>
+            <div style="margin-top:4px">${vi}</div>
         </div>`;
     });
-    h+=`</div><div id="flightResults"></div>
+    h+=`</div>
+    <div id="flightResults"></div>
     ${ctaB()}
     <div class="brow"><button class="bbtn" onclick="go(0)">← ${t().bk}</button></div></div>`;
     $('s7').innerHTML=h;
 }
 
-async function searchFlights(cid){
-    const dest = DEST_IATA[cid];
-    const cn = C.find(x=>x.id===cid);
+async function searchFlights(iata, name, flag){
     const resDiv = $('flightResults');
     
     resDiv.innerHTML=`<div style="text-align:center;padding:30px">
         <div style="font-size:36px;animation:pulse 1s ease infinite">🔍</div>
-        <div style="margin-top:8px;color:var(--dim);font-size:13px">${t().srch} ${cn.f} ${cn.n[L]}</div>
-        <div style="margin-top:4px;font-size:11px;color:var(--muted)">TAS • CIT • ALA • FRU • DYU → ${dest}</div>
+        <div style="margin-top:8px;color:var(--dim);font-size:13px">${t().srch} ${flag} ${name}</div>
+        <div style="margin-top:4px;font-size:11px;color:var(--muted)">TAS • CIT • ALA • FRU • DYU → ${iata}</div>
     </div>`;
     hp('medium');
     
+    // Scroll to results
+    resDiv.scrollIntoView({behavior:'smooth',block:'center'});
+    
     try {
-        const resp = await fetch(API_URL + '/api/search?dest=' + dest);
+        const resp = await fetch(API_URL + '/api/search?dest=' + iata);
         const data = await resp.json();
         
         if(!data.success || !data.results || data.results.length === 0){
-            resDiv.innerHTML=`<div style="text-align:center;padding:20px;color:var(--dim)">${t().noFlights}</div>`;
+            resDiv.innerHTML=`<div style="text-align:center;padding:20px;color:var(--dim)">${t().noFlights} ${flag} ${name}</div>`;
             return;
         }
         
@@ -516,23 +588,21 @@ async function searchFlights(cid){
         
         let rh=`<div class="sl" style="margin-top:16px">`;
         
-        // Best deal highlight
         const bestAirport = airports.find(a=>a.code===best.origin) || {name:best.origin,flag:"✈️"};
         const saving = tasPrice && tasPrice.price > best.price ? tasPrice.price - best.price : 0;
         
         rh+=`<div class="res-hero" style="margin-bottom:12px">
-            <div style="font-size:13px;color:var(--dim);margin-bottom:6px">${cn.f} ${cn.n[L]} • ${t().m4}</div>
+            <div style="font-size:13px;color:var(--dim);margin-bottom:6px">${flag} ${name} • ${t().m4}</div>
             <div class="res-total">${fU(best.price)}</div>
             <div style="font-size:12px;color:var(--dim);margin-top:4px">${bestAirport.flag} ${t().fromCity} ${bestAirport.name}</div>
             ${saving > 0 ? `<div style="margin-top:8px;padding:6px 12px;background:rgba(52,211,153,.12);border-radius:8px;display:inline-block;font-size:12px;font-weight:700;color:var(--green)">💰 -${fU(saving)} ${t().saveTxt} vs Toshkent</div>` : ''}
+            ${best.departure ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">📅 ${new Date(best.departure).toLocaleDateString()}</div>` : ''}
         </div>`;
         
-        // All airports comparison
         rh+=`<div class="bk" style="margin-bottom:16px">`;
         data.results.forEach((r,i)=>{
             const ap = airports.find(a=>a.code===r.origin) || {name:r.origin,flag:"✈️"};
             const isBest = i === 0;
-            const dep = r.departure ? new Date(r.departure).toLocaleDateString() : '';
             rh+=`<div class="bk-row" style="${isBest?'background:rgba(52,211,153,.06);border-radius:8px;padding:8px;margin:-2px -4px':''}">
                 <span style="font-size:16px">${ap.flag}</span>
                 <span style="flex:1;font-size:12px;font-weight:${isBest?700:400}">${ap.name}</span>
@@ -542,19 +612,17 @@ async function searchFlights(cid){
         });
         rh+=`</div>`;
         
-        // Buy button → Aviasales affiliate link
         rh+=`<a href="${data.link}" target="_blank" class="cta" style="background:linear-gradient(135deg,#f59e0b,#ef4444);margin-bottom:16px">
             <span class="cta-inner">🎫 ${t().buyTicket} — Aviasales</span>
         </a>`;
         
         rh+=`</div>`;
         resDiv.innerHTML=rh;
+        resDiv.scrollIntoView({behavior:'smooth',block:'start'});
         hp('success');
         
     } catch(e) {
-        resDiv.innerHTML=`<div style="text-align:center;padding:20px;color:var(--red);font-size:12px">
-            ⚠️ API error. Try again later.
-        </div>`;
+        resDiv.innerHTML=`<div style="text-align:center;padding:20px;color:var(--red);font-size:12px">⚠️ ${t().noFlights}</div>`;
     }
 }
 
