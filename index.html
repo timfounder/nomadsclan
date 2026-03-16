@@ -335,9 +335,10 @@ wn:"O'rtacha: ~6.4 mln so'm",
 rt:"Byudjetga qayerga borish mumkin?",rl:"Byudjet ($)",rd:"kun",
 rn:"Standart: 3★, aralash ovqat",rok:"Yetadi",rno:"Yetmaydi",rtight:"Zo'rg'a",rgreat:"Ortadi!",
 m4:"🔍 Eng arzon parvoz",m4d:"5 ta aeroportdan eng arzon biletni toping",
-srch:"Qidirilmoqda...",noFlights:"Bilet topilmadi",buyTicket:"Bilet sotib olish",
-fromCity:"dan",stops0:"To'g'ridan-to'g'ri",stops1:"1 almashinuv",saveTxt:"tejaysiz",
+srch:"Qidirilmoqda...",noFlights:"Bilet topilmadi",buyTicket:"Bilet olish ➜",
+fromCity:"dan",stops0:"To'g'ridan-to'g'ri",stops1:"1 almashinuv",stops2:"2 almashinuv",saveTxt:"tejaysiz",
 searchDest:"Qayerga uchmoqchisiz?",
+selOrigin:"Qayerdan uchasiz?",selDate:"Qachon?",allAirports:"Barcha aeroportlar",
 },ru:{title:"NOMADS",sub:"Калькулятор путешествий",
 m1:"✈️ Стоимость поездки",m1d:"Выберите страну и стиль",
 m2:"💼 Сколько работать?",m2d:"Сколько рабочих дней на поездку",
@@ -356,9 +357,10 @@ wn:"Средняя: ~6.4 млн сум",
 rt:"Куда хватит бюджета?",rl:"Бюджет ($)",rd:"дн.",
 rn:"Стандарт: 3★, смешанное питание",rok:"Хватит",rno:"Не хватит",rtight:"Впритык",rgreat:"С запасом!",
 m4:"🔍 Дешёвые билеты",m4d:"Поиск из 5 аэропортов — найдём самый дешёвый",
-srch:"Ищем...",noFlights:"Билеты не найдены",buyTicket:"Купить билет",
-fromCity:"из",stops0:"Прямой",stops1:"1 пересадка",saveTxt:"экономия",
+srch:"Ищем...",noFlights:"Билеты не найдены",buyTicket:"Купить билет ➜",
+fromCity:"из",stops0:"Прямой",stops1:"1 пересадка",stops2:"2 пересадки",saveTxt:"экономия",
 searchDest:"Куда летим?",
+selOrigin:"Откуда летите?",selDate:"Когда?",allAirports:"Все аэропорты",
 }};
 
 let L="uz",step=0,mode=0,country=null,style=1,days=7,foodS=1,funS=1,salary=6400000,budget=800;
@@ -520,21 +522,28 @@ uz:["🔥 Mashhur","🌍 Yevropa","🌏 Osiyo","🕌 Yaqin Sharq","🤝 MDH"],
 ru:["🔥 Популярные","🌍 Европа","🌏 Азия","🕌 Бл. Восток","🤝 СНГ"]
 };
 
-let flFilter = 'all'; // all, 0,1,2,3,4
+let flFilter = 'all';
+let flyDest = null; // selected destination object
+let flyMonth = ''; // YYYY-MM
 
+// ===== STEP 7a: WHERE (destination) =====
 function r7(){
     $('prog').style.display='none';
+    flyDest=null; flyMonth='';
+    r7where();
+}
+
+function r7where(){
     const regs = REGIONS[L];
-    let h=`<div class="sl"><h2 class="ttl">${t().m4}</h2><p class="hint">${t().searchDest} • 40 ${L==='uz'?'ta yo\'nalish':'направлений'}</p>
+    let h=`<div class="sl"><h2 class="ttl">${L==='uz'?'Qayerga uchmoqchisiz?':'Куда летим?'}</h2>
+    <p class="hint">40 ${L==='uz'?"ta yo'nalish":"направлений"} • ${L==='uz'?"tanlang":"выберите"}</p>
     
-    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;-webkit-overflow-scrolling:touch">
-        <button class="dbtn${flFilter==='all'?' sel':''}" onclick="flFilter='all';r7()" style="white-space:nowrap;font-size:12px;padding:8px 14px">${L==='uz'?'Hammasi':'Все'}</button>`;
-    
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;-webkit-overflow-scrolling:touch">
+        <button class="dbtn${flFilter==='all'?' sel':''}" onclick="flFilter='all';r7where()" style="white-space:nowrap;font-size:11px;padding:7px 12px">${L==='uz'?'Hammasi':'Все'}</button>`;
     for(let i=0;i<5;i++){
-        h+=`<button class="dbtn${flFilter==String(i)?' sel':''}" onclick="flFilter='${i}';r7()" style="white-space:nowrap;font-size:12px;padding:8px 14px">${regs[i]}</button>`;
+        h+=`<button class="dbtn${flFilter==String(i)?' sel':''}" onclick="flFilter='${i}';r7where()" style="white-space:nowrap;font-size:11px;padding:7px 12px">${regs[i]}</button>`;
     }
-    h+=`<button class="dbtn${flFilter==='nv'?' sel':''}" onclick="flFilter='nv';r7()" style="white-space:nowrap;font-size:12px;padding:8px 14px">✅ ${t().nv}</button>`;
-    h+=`</div>`;
+    h+=`<button class="dbtn${flFilter==='nv'?' sel':''}" onclick="flFilter='nv';r7where()" style="white-space:nowrap;font-size:11px;padding:7px 12px">✅ ${t().nv}</button></div>`;
     
     const filtered = DESTS.filter(d=>{
         if(flFilter==='all') return true;
@@ -542,87 +551,170 @@ function r7(){
         return d.r===parseInt(flFilter);
     });
     
-    h+=`<div class="c-grid" style="margin-bottom:16px">`;
+    h+=`<div class="c-grid">`;
     filtered.forEach((d,i)=>{
-        const vi = d.v ? `<span class="badge badge-visa" style="font-size:8px">${t().yv}</span>` : `<span class="badge badge-free" style="font-size:8px">${t().nv}</span>`;
-        const direct = d.dr ? '✈️' : '🔄';
-        h+=`<div class="c-card sl sl${Math.min(i+1,10)}" onclick="searchFlights('${d.iata}','${d.n[L]}','${d.f}')" style="text-align:center;padding:10px 8px">
+        const vi = d.v?`<span class="badge badge-visa" style="font-size:8px">${t().yv}</span>`:`<span class="badge badge-free" style="font-size:8px">${t().nv}</span>`;
+        h+=`<div class="c-card sl sl${Math.min(i+1,10)}" onclick="flyDest=DESTS.find(x=>x.iata==='${d.iata}');hp('medium');r7when()" style="text-align:center;padding:10px 8px">
             <span style="font-size:26px">${d.f}</span>
             <div style="font-weight:700;font-size:12px;margin-top:3px">${d.n[L]}</div>
-            <div style="font-size:9px;color:var(--dim);margin-top:2px">${d.iata} ${direct}</div>
+            <div style="font-size:9px;color:var(--dim);margin-top:2px">${d.iata} ${d.dr?'✈️':'🔄'}</div>
             <div style="margin-top:4px">${vi}</div>
         </div>`;
     });
     h+=`</div>
-    <div id="flightResults"></div>
-    ${ctaB()}
-    <div class="brow"><button class="bbtn" onclick="go(0)">← ${t().bk}</button></div></div>`;
+    <div class="brow" style="margin-top:16px"><button class="bbtn" onclick="go(0)">← ${t().bk}</button></div></div>`;
     $('s7').innerHTML=h;
 }
 
-async function searchFlights(iata, name, flag){
-    const resDiv = $('flightResults');
+// ===== STEP 7b: WHEN (month) =====
+function r7when(){
+    const now = new Date();
+    let h=`<div class="sl">
+    <h2 class="ttl">${L==='uz'?'Qachon uchmoqchisiz?':'Когда летим?'}</h2>
+    <p class="hint">${flyDest.f} ${flyDest.n[L]} (${flyDest.iata})</p>
     
-    resDiv.innerHTML=`<div style="text-align:center;padding:30px">
-        <div style="font-size:36px;animation:pulse 1s ease infinite">🔍</div>
-        <div style="margin-top:8px;color:var(--dim);font-size:13px">${t().srch} ${flag} ${name}</div>
-        <div style="margin-top:4px;font-size:11px;color:var(--muted)">TAS • CIT • ALA • FRU • DYU → ${iata}</div>
+    <button class="mode sl sl1" onclick="flyMonth='';hp('medium');r7search()" style="margin-bottom:16px;justify-content:center">
+        <div class="mode-ico">🔥</div>
+        <div>
+            <div class="mode-t">${L==='uz'?"Eng arzon sanani topish":"Найти самую дешёвую дату"}</div>
+            <div class="mode-d">${L==='uz'?"Barcha oylardan eng arzon":"Поиск по всем месяцам"}</div>
+        </div>
+    </button>
+    
+    <div style="font-size:12px;font-weight:600;color:var(--dim);margin-bottom:10px">${L==='uz'?"Yoki oyni tanlang":"Или выберите месяц"}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">`;
+    
+    const monthEmojis = ['❄️','❄️','🌸','🌸','☀️','☀️','☀️','☀️','🍂','🍂','🍁','❄️'];
+    for(let i=0;i<6;i++){
+        const d = new Date(now.getFullYear(), now.getMonth()+i, 1);
+        const val = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+        const mName = d.toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{month:'long',year:'numeric'});
+        const emoji = monthEmojis[d.getMonth()];
+        h+=`<button class="st-card sl sl${i+2}" onclick="flyMonth='${val}';hp('medium');r7search()" style="justify-content:center;text-align:center;padding:16px 12px">
+            <div><div style="font-size:20px;margin-bottom:4px">${emoji}</div><div class="st-lbl" style="font-size:13px">${mName}</div></div>
+        </button>`;
+    }
+    
+    h+=`</div>
+    <div class="brow"><button class="bbtn" onclick="r7where()">← ${t().bk}</button></div></div>`;
+    $('s7').innerHTML=h;
+}
+
+// ===== STEP 7c: RESULTS (search all 5 airports) =====
+async function r7search(){
+    const d = flyDest;
+    const dateLabel = flyMonth || (L==='uz'?'eng arzon sana':'лучшая дата');
+    const airports = AIRPORTS[L];
+    
+    // Show loading
+    $('s7').innerHTML=`<div class="sl" style="text-align:center;padding:40px 20px">
+        <div style="font-size:48px;animation:pulse 1s ease infinite">🔍</div>
+        <h2 style="font-size:18px;margin-top:16px">${d.f} ${d.n[L]}</h2>
+        <div style="color:var(--dim);font-size:13px;margin-top:8px">${L==='uz'?"5 ta aeroportdan qidirilmoqda...":"Ищем из 5 аэропортов..."}</div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;font-size:18px">
+            ${airports.map(a=>`<span>${a.flag}</span>`).join('')}
+        </div>
+        <div style="color:var(--muted);font-size:11px;margin-top:8px">📅 ${dateLabel}</div>
     </div>`;
     hp('medium');
     
-    // Scroll to results
-    resDiv.scrollIntoView({behavior:'smooth',block:'center'});
-    
     try {
-        const resp = await fetch(API_URL + '/api/search?dest=' + iata);
+        let url = API_URL + '/api/search?dest=' + d.iata + '&origins=TAS,CIT,ALA,FRU,DYU';
+        if(flyMonth) url += '&depart=' + flyMonth;
+        
+        const resp = await fetch(url);
         const data = await resp.json();
         
         if(!data.success || !data.results || data.results.length === 0){
-            resDiv.innerHTML=`<div style="text-align:center;padding:20px;color:var(--dim)">${t().noFlights} ${flag} ${name}</div>`;
+            $('s7').innerHTML=`<div class="sl" style="text-align:center;padding:40px 20px">
+                <div style="font-size:40px;margin-bottom:12px">😔</div>
+                <h2 style="font-size:16px">${t().noFlights}</h2>
+                <div style="color:var(--dim);font-size:12px;margin-top:6px">${d.f} ${d.n[L]}</div>
+                <div class="brow" style="margin-top:20px;justify-content:center">
+                    <button class="bbtn" onclick="r7when()">📅 ${L==='uz'?"Boshqa oy":"Другой месяц"}</button>
+                    <button class="bbtn" onclick="r7where()">🌍 ${L==='uz'?"Boshqa davlat":"Другая страна"}</button>
+                </div>
+            </div>`;
             return;
         }
         
-        const airports = AIRPORTS[L];
         const best = data.results[0];
-        const tasPrice = data.results.find(r=>r.origin==='TAS');
+        const worst = data.results[data.results.length-1];
+        const maxSaving = worst.price - best.price;
         
-        let rh=`<div class="sl" style="margin-top:16px">`;
+        let h=`<div class="sl">
+        <h2 class="ttl">${d.f} ${d.n[L]}</h2>
+        <p class="hint">${L==='uz'?"Eng arzon — tepada":"Самый дешёвый — сверху"} • 📅 ${dateLabel}</p>
         
-        const bestAirport = airports.find(a=>a.code===best.origin) || {name:best.origin,flag:"✈️"};
-        const saving = tasPrice && tasPrice.price > best.price ? tasPrice.price - best.price : 0;
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">`;
         
-        rh+=`<div class="res-hero" style="margin-bottom:12px">
-            <div style="font-size:13px;color:var(--dim);margin-bottom:6px">${flag} ${name} • ${t().m4}</div>
-            <div class="res-total">${fU(best.price)}</div>
-            <div style="font-size:12px;color:var(--dim);margin-top:4px">${bestAirport.flag} ${t().fromCity} ${bestAirport.name}</div>
-            ${saving > 0 ? `<div style="margin-top:8px;padding:6px 12px;background:rgba(52,211,153,.12);border-radius:8px;display:inline-block;font-size:12px;font-weight:700;color:var(--green)">💰 -${fU(saving)} ${t().saveTxt} vs Toshkent</div>` : ''}
-            ${best.departure ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">📅 ${new Date(best.departure).toLocaleDateString()}</div>` : ''}
-        </div>`;
-        
-        rh+=`<div class="bk" style="margin-bottom:16px">`;
         data.results.forEach((r,i)=>{
-            const ap = airports.find(a=>a.code===r.origin) || {name:r.origin,flag:"✈️"};
+            const ap = airports.find(a=>a.code===r.origin) || {name:r.origin,flag:'✈️'};
             const isBest = i === 0;
-            rh+=`<div class="bk-row" style="${isBest?'background:rgba(52,211,153,.06);border-radius:8px;padding:8px;margin:-2px -4px':''}">
-                <span style="font-size:16px">${ap.flag}</span>
-                <span style="flex:1;font-size:12px;font-weight:${isBest?700:400}">${ap.name}</span>
-                <span style="font-size:10px;color:var(--dim)">${r.stops===0?t().stops0:t().stops1}</span>
-                <span class="bk-val" style="${isBest?'color:var(--green)':''}">${fU(r.price)}</span>
-            </div>`;
+            const saving = r.price - best.price;
+            const stopsText = r.stops===0?t().stops0:r.stops===1?t().stops1:t().stops2;
+            const depDate = r.departure ? new Date(r.departure).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{day:'numeric',month:'short'}) : '';
+            const retDate = r.return ? new Date(r.return).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{day:'numeric',month:'short'}) : '';
+            
+            h+=`<a href="${r.link}" target="_blank" style="text-decoration:none;color:inherit">
+            <div class="rv ${isBest?'rv-ok':'rv-mid'}" style="flex-direction:column;align-items:stretch;padding:16px;${isBest?'border-width:2px':''}">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                    <span style="font-size:28px">${ap.flag}</span>
+                    <div style="flex:1">
+                        <div style="font-weight:700;font-size:15px">${ap.name}</div>
+                        <div style="font-size:11px;color:var(--dim)">${ap.code} → ${d.iata} • ${stopsText}</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;${isBest?'color:var(--green)':''}">${fU(r.price)}</div>
+                        ${isBest?`<div style="font-size:10px;font-weight:700;color:var(--green)">🏆 ${L==='uz'?'ENG ARZON':'ЛУЧШАЯ ЦЕНА'}</div>`:''}
+                        ${!isBest && saving>0?`<div style="font-size:10px;color:var(--dim)">+${fU(saving)}</div>`:''}
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div style="font-size:11px;color:var(--dim)">
+                        ${depDate?`🛫 ${depDate}`:''}${retDate?` → 🛬 ${retDate}`:''}
+                    </div>
+                    <div style="font-size:11px;font-weight:600;color:var(--acc)">
+                        ${t().buyTicket}
+                    </div>
+                </div>
+            </div>
+            </a>`;
         });
-        rh+=`</div>`;
         
-        rh+=`<a href="${data.link}" target="_blank" class="cta" style="background:linear-gradient(135deg,#f59e0b,#ef4444);margin-bottom:16px">
-            <span class="cta-inner">🎫 ${t().buyTicket} — Aviasales</span>
-        </a>`;
+        h+=`</div>`;
         
-        rh+=`</div>`;
-        resDiv.innerHTML=rh;
-        resDiv.scrollIntoView({behavior:'smooth',block:'start'});
+        // Savings summary
+        if(maxSaving > 20 && data.results.length > 1){
+            const bestAp = airports.find(a=>a.code===best.origin) || {name:best.origin};
+            h+=`<div class="tip" style="text-align:center;margin-bottom:16px">
+                <div style="font-size:13px;font-weight:700">💡 ${L==='uz'?'Maslahat':'Совет'}</div>
+                <div style="font-size:12px;color:var(--dim);margin-top:4px;line-height:1.5">
+                    ${L==='uz'
+                        ?`${bestAp.name} dan uchsangiz <b>${fU(maxSaving)}</b> tejaysiz!`
+                        :`Вылет из ${bestAp.name} сэкономит вам <b>${fU(maxSaving)}</b>!`
+                    }
+                </div>
+            </div>`;
+        }
+        
+        h+=`${ctaB()}
+        <div class="brow">
+            <button class="bbtn" onclick="r7when()">📅 ${L==='uz'?"Boshqa oy":"Другой месяц"}</button>
+            <button class="bbtn" onclick="r7where()">🌍 ${L==='uz'?"Boshqa davlat":"Другая страна"}</button>
+        </div></div>`;
+        
+        $('s7').innerHTML=h;
         hp('success');
         
     } catch(e) {
-        resDiv.innerHTML=`<div style="text-align:center;padding:20px;color:var(--red);font-size:12px">⚠️ ${t().noFlights}</div>`;
+        $('s7').innerHTML=`<div class="sl" style="text-align:center;padding:40px">
+            <div style="font-size:32px">⚠️</div>
+            <div style="color:var(--dim);margin-top:8px;font-size:13px">${t().noFlights}</div>
+            <div class="brow" style="margin-top:16px;justify-content:center">
+                <button class="bbtn" onclick="r7where()">← ${t().bk}</button>
+            </div>
+        </div>`;
     }
 }
 
