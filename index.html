@@ -637,19 +637,66 @@ function r7date(cy,cm){
 }
 
 function showCal(y,m){
+    const g=$('calG');
+    g.innerHTML=`<div style="text-align:center;padding:20px;color:var(--dim);font-size:12px">${L==='uz'?'Narxlar yuklanmoqda...':'Загрузка цен...'}</div>`;
+    
+    const mo=y+'-'+String(m+1).padStart(2,'0');
+    // Fetch prices for this month from cheapest origin (TAS by default)
+    fetch(API_URL+'/api/calendar?origin=TAS&dest='+flyDest.iata+'&month='+mo)
+    .then(r=>r.json()).then(data=>{
+        renderCalWithPrices(y,m,data.days||{});
+    }).catch(()=>{
+        renderCalWithPrices(y,m,{});
+    });
+}
+
+function renderCalWithPrices(y,m,dayPrices){
     const g=$('calG'),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
     const f=new Date(y,m,1),last=new Date(y,m+1,0),sd=(f.getDay()+6)%7;
     const dn=L==='uz'?['Du','Se','Ch','Pa','Ju','Sh','Ya']:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-    let h=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center">`;
-    dn.forEach(d=>{h+=`<div style="font-size:10px;color:var(--dim);padding:4px;font-weight:600">${d}</div>`});
+    
+    // Find min/max prices for color coding
+    const allPrices=Object.values(dayPrices).map(v=>v.price).filter(p=>p>0);
+    const minP=allPrices.length?Math.min(...allPrices):0;
+    const maxP=allPrices.length?Math.max(...allPrices):0;
+    
+    let h=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">`;
+    dn.forEach(d=>{h+=`<div style="font-size:10px;color:var(--dim);padding:4px 0;font-weight:600">${d}</div>`});
     for(let i=0;i<sd;i++) h+=`<div></div>`;
     for(let d=1;d<=last.getDate();d++){
         const dt=new Date(y,m,d),ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const past=dt<today,sel=flyDateStr===ds,td=dt.getTime()===today.getTime();
-        if(past){h+=`<div style="font-size:13px;padding:10px 0;color:var(--muted);opacity:.3">${d}</div>`}
-        else{h+=`<div onclick="flyDateStr='${ds}';flyMonth='';hp('light');doSearch()" style="font-size:13px;padding:10px 0;cursor:pointer;border-radius:10px;font-weight:${sel?800:td?700:400};background:${sel?'var(--grad)':td?'var(--surf2)':'transparent'};color:${sel?'var(--bg1)':'var(--text)'};border:${td&&!sel?'1px solid var(--acc)':'1px solid transparent'}">${d}</div>`}
+        const past=dt<today;
+        const dp=dayPrices[ds];
+        const price=dp?dp.price:0;
+        const link=dp?dp.link:'';
+        
+        // Color: green=cheap, yellow=mid, dim=expensive, no price=muted
+        let priceColor='var(--muted)';
+        if(price>0&&minP>0){
+            const ratio=(price-minP)/(maxP-minP||1);
+            if(ratio<=0.2) priceColor='var(--green)';
+            else if(ratio<=0.5) priceColor='var(--acc)';
+            else if(ratio<=0.75) priceColor='var(--acc3)';
+            else priceColor='var(--dim)';
+        }
+        
+        if(past){
+            h+=`<div style="padding:6px 0;opacity:.25"><div style="font-size:12px;color:var(--muted)">${d}</div></div>`;
+        } else {
+            const clickAction=link?
+                `window.open('${link}','_blank')`:
+                `flyDateStr='${ds}';flyMonth='';hp('light');doSearch()`;
+            h+=`<div onclick="${clickAction}" style="padding:6px 2px;cursor:pointer;border-radius:10px;transition:.15s;border:1px solid ${price===minP&&price>0?'var(--green)':'transparent'};background:${price===minP&&price>0?'rgba(52,211,153,.08)':'transparent'}" ontouchstart="this.style.background='var(--surf2)'" ontouchend="this.style.background='${price===minP&&price>0?'rgba(52,211,153,.08)':'transparent'}'">
+                <div style="font-size:13px;font-weight:600;color:var(--text)">${d}</div>
+                ${price>0?`<div style="font-size:9px;font-weight:700;color:${priceColor};margin-top:1px">$${price}</div>`:`<div style="font-size:9px;color:var(--muted);margin-top:1px">—</div>`}
+            </div>`;
+        }
     }
-    h+=`</div>`;g.innerHTML=h;
+    h+=`</div>`;
+    if(minP>0){
+        h+=`<div style="margin-top:8px;text-align:center;font-size:11px;color:var(--green);font-weight:600">💚 ${L==='uz'?'Eng arzon':'Мин.'}: $${minP} ${maxP!==minP?(L==='uz'?' — eng qimmat':' — макс.')+': $'+maxP:''}</div>`;
+    }
+    g.innerHTML=h;
 }
 
 // ===== STEP 7.3: SEARCH + RESULTS =====
@@ -1185,19 +1232,64 @@ function r9date(cy,cm){
 }
 
 function showRevCal(y,m){
+    const g=$('revCalG');
+    g.innerHTML=`<div style="text-align:center;padding:20px;color:var(--dim);font-size:12px">${L==='uz'?'Narxlar yuklanmoqda...':'Загрузка цен...'}</div>`;
+    
+    const mo=y+'-'+String(m+1).padStart(2,'0');
+    // For reverse: origin is the foreign city, dest is TAS
+    fetch(API_URL+'/api/calendar?origin='+flyDest.iata+'&dest=TAS&month='+mo)
+    .then(r=>r.json()).then(data=>{
+        renderRevCalWithPrices(y,m,data.days||{});
+    }).catch(()=>{
+        renderRevCalWithPrices(y,m,{});
+    });
+}
+
+function renderRevCalWithPrices(y,m,dayPrices){
     const g=$('revCalG'),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
     const f=new Date(y,m,1),last=new Date(y,m+1,0),sd=(f.getDay()+6)%7;
     const dn=L==='uz'?['Du','Se','Ch','Pa','Ju','Sh','Ya']:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-    let h=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center">`;
-    dn.forEach(d=>{h+=`<div style="font-size:10px;color:var(--dim);padding:4px;font-weight:600">${d}</div>`});
+    
+    const allPrices=Object.values(dayPrices).map(v=>v.price).filter(p=>p>0);
+    const minP=allPrices.length?Math.min(...allPrices):0;
+    const maxP=allPrices.length?Math.max(...allPrices):0;
+    
+    let h=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">`;
+    dn.forEach(d=>{h+=`<div style="font-size:10px;color:var(--dim);padding:4px 0;font-weight:600">${d}</div>`});
     for(let i=0;i<sd;i++) h+=`<div></div>`;
     for(let d=1;d<=last.getDate();d++){
         const dt=new Date(y,m,d),ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const past=dt<today,sel=flyDateStr===ds,td=dt.getTime()===today.getTime();
-        if(past){h+=`<div style="font-size:13px;padding:10px 0;color:var(--muted);opacity:.3">${d}</div>`}
-        else{h+=`<div onclick="flyDateStr='${ds}';flyMonth='';hp('light');doSearch()" style="font-size:13px;padding:10px 0;cursor:pointer;border-radius:10px;font-weight:${sel?800:td?700:400};background:${sel?'var(--grad)':td?'var(--surf2)':'transparent'};color:${sel?'var(--bg1)':'var(--text)'};border:${td&&!sel?'1px solid var(--acc)':'1px solid transparent'}">${d}</div>`}
+        const past=dt<today;
+        const dp=dayPrices[ds];
+        const price=dp?dp.price:0;
+        const link=dp?dp.link:'';
+        
+        let priceColor='var(--muted)';
+        if(price>0&&minP>0){
+            const ratio=(price-minP)/(maxP-minP||1);
+            if(ratio<=0.2) priceColor='var(--green)';
+            else if(ratio<=0.5) priceColor='var(--acc)';
+            else if(ratio<=0.75) priceColor='var(--acc3)';
+            else priceColor='var(--dim)';
+        }
+        
+        if(past){
+            h+=`<div style="padding:6px 0;opacity:.25"><div style="font-size:12px;color:var(--muted)">${d}</div></div>`;
+        } else {
+            const clickAction=link?
+                `window.open('${link}','_blank')`:
+                `flyDateStr='${ds}';flyMonth='';hp('light');doSearch()`;
+            h+=`<div onclick="${clickAction}" style="padding:6px 2px;cursor:pointer;border-radius:10px;border:1px solid ${price===minP&&price>0?'var(--green)':'transparent'};background:${price===minP&&price>0?'rgba(52,211,153,.08)':'transparent'}">
+                <div style="font-size:13px;font-weight:600;color:var(--text)">${d}</div>
+                ${price>0?`<div style="font-size:9px;font-weight:700;color:${priceColor};margin-top:1px">$${price}</div>`:`<div style="font-size:9px;color:var(--muted);margin-top:1px">—</div>`}
+            </div>`;
+        }
     }
-    h+=`</div>`;g.innerHTML=h;
+    h+=`</div>`;
+    if(minP>0){
+        h+=`<div style="margin-top:8px;text-align:center;font-size:11px;color:var(--green);font-weight:600">💚 ${L==='uz'?'Eng arzon':'Мин.'}: $${minP}</div>`;
+    }
+    g.innerHTML=h;
 }
 
 function showReverseResults(results,dl){
