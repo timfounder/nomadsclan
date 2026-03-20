@@ -555,6 +555,7 @@ let flyDest = null; // {iata, name, flag}
 let flyDateStr = ''; // YYYY-MM-DD or empty
 let flyMonth = ''; // YYYY-MM for month search
 let flyReverse = false; // true = return flight mode
+let selCalY = 0, selCalM = 0; // selected calendar month for display
 
 // ===== STEP 7.1: WHERE TO FLY =====
 function r7(){
@@ -563,6 +564,7 @@ function r7(){
     flyDateStr = '';
     flyMonth = '';
     flyReverse = false;
+    selCalY = 0; selCalM = 0;
     const regs = REGIONS[L];
     
     let h=`<div class="sl"><h2 class="ttl">${L==='uz'?'Qayerga uchmoqchisiz?':'Куда летите?'}</h2>
@@ -598,10 +600,14 @@ function r7(){
 function pickDest(iata,name,flag){flyDest={iata,name,flag};hp('medium');r7date()}
 
 // ===== STEP 7.2: WHEN (calendar) =====
-function r7date(){
+function r7date(cy,cm){
     const now=new Date(),curY=now.getFullYear(),curM=now.getMonth();
-    let calM=curM,calY=curY;
-    if(flyDateStr){const p=flyDateStr.split('-');calY=+p[0];calM=+p[1]-1}
+    // Use passed month or default to current
+    if(cy!==undefined&&cm!==undefined){selCalY=cy;selCalM=cm;}
+    else if(!selCalY){selCalY=curY;selCalM=curM;}
+    
+    const selMonth = selCalY+'-'+String(selCalM+1).padStart(2,'0');
+    const monthName = new Date(selCalY,selCalM,1).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{month:'long'});
     
     let h=`<div class="sl">
     <h2 class="ttl">${L==='uz'?'Qachon uchmoqchisiz?':'Когда летите?'}</h2>
@@ -612,17 +618,14 @@ function r7date(){
     h+=`<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px;-webkit-overflow-scrolling:touch">`;
     for(let i=0;i<6;i++){
         const d=new Date(curY,curM+i,1);
-        const sel=calY===d.getFullYear()&&calM===d.getMonth();
-        h+=`<button class="dbtn${sel?' sel':''}" onclick="showCal(${d.getFullYear()},${d.getMonth()})" style="white-space:nowrap;font-size:11px;padding:8px 14px">${d.toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{month:'long'})}</button>`;
+        const sel=selCalY===d.getFullYear()&&selCalM===d.getMonth();
+        h+=`<button class="dbtn${sel?' sel':''}" onclick="r7date(${d.getFullYear()},${d.getMonth()})" style="white-space:nowrap;font-size:11px;padding:8px 14px">${d.toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{month:'long'})}</button>`;
     }
     h+=`</div>`;
     
-    // "Best price this month" button
-    const selMonth = calY+'-'+String(calM+1).padStart(2,'0');
-    const monthName = new Date(calY,calM,1).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{month:'long'});
     h+=`<div style="margin:10px 0 8px">
         <button class="nn" onclick="flyDateStr='';flyMonth='${selMonth}';doSearch()" style="width:100%;font-size:14px;padding:14px;border-radius:14px">
-            🔥 ${L==='uz'?monthName+' — eng arzon kun':monthName+' — лучшая цена'}
+            🔥 ${monthName} — ${L==='uz'?'eng arzon kun':'лучшая цена'}
         </button>
     </div>
     <div style="font-size:12px;font-weight:600;color:var(--dim);margin-bottom:8px;text-align:center">${L==='uz'?"Yoki kunni tanlang":"Или выберите день"}</div>`;
@@ -630,7 +633,7 @@ function r7date(){
     h+=`<div id="calG"></div>
     <div class="brow" style="margin-top:16px"><button class="bbtn" onclick="r7()">← ${t().bk}</button></div></div>`;
     $('s7').innerHTML=h;
-    showCal(calY,calM);
+    showCal(selCalY,selCalM);
 }
 
 function showCal(y,m){
@@ -730,7 +733,7 @@ function showResults(results,dl){
     let h=`<div class="sl">
     <div style="text-align:center;margin-bottom:16px">
         <div style="font-size:14px;color:var(--dim)">${flyDest.flag} ${flyDest.name} • ${dl}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${L==='uz'?'Qayerdan uchish arzonroq?':'Откуда лететь дешевле?'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">🛫 ${L==='uz'?'Faqat borish • Qayerdan arzonroq?':'Только туда • Откуда дешевле?'}</div>
     </div>`;
     
     results.forEach((r,i)=>{
@@ -738,7 +741,6 @@ function showResults(results,dl){
         const isBest=i===0,save=r.price-best.price;
         const st=r.stops===0?t().stops0:r.stops===1?t().stops1:(t().stops2||'2+');
         const dd=r.departure?new Date(r.departure).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{day:'numeric',month:'short'}):'';
-        const rd=r.return?new Date(r.return).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{day:'numeric',month:'short'}):'';
         
         h+=`<a href="${r.link}" target="_blank" style="text-decoration:none;display:block;margin-bottom:10px">
         <div class="sl sl${Math.min(i+1,5)}" style="background:${isBest?'linear-gradient(135deg,rgba(52,211,153,.08),rgba(99,213,190,.04))':'var(--bg3)'};border:1px solid ${isBest?'rgba(52,211,153,.25)':'var(--brd)'};border-radius:18px;padding:16px;position:relative;overflow:hidden;${isBest?'box-shadow:0 0 30px rgba(52,211,153,.08)':''}">
@@ -748,7 +750,7 @@ function showResults(results,dl){
                 <div style="flex:1">
                     <div style="font-weight:700;font-size:15px;color:var(--text)">${a.name}</div>
                     <div style="font-size:11px;color:var(--dim);margin-top:2px">${a.code} → ${flyDest.iata} • ${st}</div>
-                    ${dd?`<div style="font-size:10px;color:var(--muted);margin-top:3px">🛫 ${dd} ${rd?'→ 🛬 '+rd:''}</div>`:''}
+                    ${dd?`<div style="font-size:10px;color:var(--muted);margin-top:3px">🛫 ${dd}</div>`:''}
                 </div>
                 <div style="text-align:right">
                     <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:${isBest?'var(--green)':'var(--text)'}">${fU(r.price)}</div>
@@ -1117,6 +1119,7 @@ go(0);
 function r9(){
     $('prog').style.display='none';
     flyDest=null;flyDateStr='';flyMonth='';flyReverse=true;
+    selCalY=0;selCalM=0;
     const regs=REGIONS[L];
     
     let h=`<div class="sl"><h2 class="ttl">${L==='uz'?"Qayerdan qaytmoqchisiz?":"Откуда возвращаетесь?"}</h2>
@@ -1146,10 +1149,13 @@ function r9(){
 
 function pickRevDest(iata,name,flag){flyDest={iata,name,flag};flyReverse=true;hp('medium');r9date()}
 
-function r9date(){
+function r9date(cy,cm){
     const now=new Date(),curY=now.getFullYear(),curM=now.getMonth();
-    let calM=curM,calY=curY;
-    if(flyDateStr){const p=flyDateStr.split('-');calY=+p[0];calM=+p[1]-1}
+    if(cy!==undefined&&cm!==undefined){selCalY=cy;selCalM=cm;}
+    else if(!selCalY){selCalY=curY;selCalM=curM;}
+    
+    const selMonth=selCalY+'-'+String(selCalM+1).padStart(2,'0');
+    const monthName=new Date(selCalY,selCalM,1).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{month:'long'});
     
     let h=`<div class="sl">
     <h2 class="ttl">${L==='uz'?"Qachon qaytmoqchisiz?":"Когда возвращаетесь?"}</h2>
@@ -1160,16 +1166,14 @@ function r9date(){
     h+=`<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px;-webkit-overflow-scrolling:touch">`;
     for(let i=0;i<6;i++){
         const d=new Date(curY,curM+i,1);
-        const sel=calY===d.getFullYear()&&calM===d.getMonth();
-        h+=`<button class="dbtn${sel?' sel':''}" onclick="showRevCal(${d.getFullYear()},${d.getMonth()})" style="white-space:nowrap;font-size:11px;padding:8px 14px">${d.toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{month:'long'})}</button>`;
+        const sel=selCalY===d.getFullYear()&&selCalM===d.getMonth();
+        h+=`<button class="dbtn${sel?' sel':''}" onclick="r9date(${d.getFullYear()},${d.getMonth()})" style="white-space:nowrap;font-size:11px;padding:8px 14px">${d.toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{month:'long'})}</button>`;
     }
     h+=`</div>`;
     
-    const selMonth=calY+'-'+String(calM+1).padStart(2,'0');
-    const monthName=new Date(calY,calM,1).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{month:'long'});
     h+=`<div style="margin:10px 0 8px">
         <button class="nn" onclick="flyDateStr='';flyMonth='${selMonth}';doSearch()" style="width:100%;font-size:14px;padding:14px;border-radius:14px">
-            🔥 ${L==='uz'?monthName+' — eng arzon kun':monthName+' — лучшая цена'}
+            🔥 ${monthName} — ${L==='uz'?'eng arzon kun':'лучшая цена'}
         </button>
     </div>
     <div style="font-size:12px;font-weight:600;color:var(--dim);margin-bottom:8px;text-align:center">${L==='uz'?"Yoki kunni tanlang":"Или выберите день"}</div>`;
@@ -1177,7 +1181,7 @@ function r9date(){
     h+=`<div id="revCalG"></div>
     <div class="brow" style="margin-top:16px"><button class="bbtn" onclick="r9()">← ${t().bk}</button></div></div>`;
     $('s9').innerHTML=h;
-    showRevCal(calY,calM);
+    showRevCal(selCalY,selCalM);
 }
 
 function showRevCal(y,m){
@@ -1212,7 +1216,6 @@ function showReverseResults(results,dl){
         const isBest=i===0,save=r.price-best.price;
         const st=r.stops===0?t().stops0:r.stops===1?t().stops1:(t().stops2||'2+');
         const dd=r.departure?new Date(r.departure).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{day:'numeric',month:'short'}):'';
-        const rd=r.return?new Date(r.return).toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{day:'numeric',month:'short'}):'';
         
         h+=`<a href="${r.link}" target="_blank" style="text-decoration:none;display:block;margin-bottom:10px">
         <div class="sl sl${Math.min(i+1,5)}" style="background:${isBest?'linear-gradient(135deg,rgba(52,211,153,.08),rgba(99,213,190,.04))':'var(--bg3)'};border:1px solid ${isBest?'rgba(52,211,153,.25)':'var(--brd)'};border-radius:18px;padding:16px;position:relative;overflow:hidden;${isBest?'box-shadow:0 0 30px rgba(52,211,153,.08)':''}">
@@ -1222,7 +1225,7 @@ function showReverseResults(results,dl){
                 <div style="flex:1">
                     <div style="font-weight:700;font-size:15px;color:var(--text)">→ ${destAp.name}</div>
                     <div style="font-size:11px;color:var(--dim);margin-top:2px">${flyDest.iata} → ${r.destCity} • ${st}</div>
-                    ${dd?`<div style="font-size:10px;color:var(--muted);margin-top:3px">🛫 ${dd} ${rd?'→ 🛬 '+rd:''}</div>`:''}
+                    ${dd?`<div style="font-size:10px;color:var(--muted);margin-top:3px">🛫 ${dd}</div>`:''}
                 </div>
                 <div style="text-align:right">
                     <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:${isBest?'var(--green)':'var(--text)'}">${fU(r.price)}</div>
