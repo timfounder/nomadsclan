@@ -641,12 +641,23 @@ function showCal(y,m){
     g.innerHTML=`<div style="text-align:center;padding:20px;color:var(--dim);font-size:12px">${L==='uz'?'Narxlar yuklanmoqda...':'Загрузка цен...'}</div>`;
     
     const mo=y+'-'+String(m+1).padStart(2,'0');
-    // Fetch prices for this month from cheapest origin (TAS by default)
-    fetch(API_URL+'/api/calendar?origin=TAS&dest='+flyDest.iata+'&month='+mo)
-    .then(r=>r.json()).then(data=>{
-        renderCalWithPrices(y,m,data.days||{});
-    }).catch(()=>{
-        renderCalWithPrices(y,m,{});
+    const origins=['TAS','CIT','ALA','FRU','DYU'];
+    
+    Promise.all(origins.map(o=>
+        fetch(API_URL+'/api/calendar?origin='+o+'&dest='+flyDest.iata+'&month='+mo)
+        .then(r=>r.json()).catch(()=>({days:{}}))
+    )).then(results=>{
+        // Merge: keep min price per day across all origins
+        const merged={};
+        results.forEach(r=>{
+            const days=r.days||{};
+            Object.keys(days).forEach(d=>{
+                if(!merged[d]||days[d].price<merged[d].price){
+                    merged[d]=days[d];
+                }
+            });
+        });
+        renderCalWithPrices(y,m,merged);
     });
 }
 
@@ -1236,12 +1247,22 @@ function showRevCal(y,m){
     g.innerHTML=`<div style="text-align:center;padding:20px;color:var(--dim);font-size:12px">${L==='uz'?'Narxlar yuklanmoqda...':'Загрузка цен...'}</div>`;
     
     const mo=y+'-'+String(m+1).padStart(2,'0');
-    // For reverse: origin is the foreign city, dest is TAS
-    fetch(API_URL+'/api/calendar?origin='+flyDest.iata+'&dest=TAS&month='+mo)
-    .then(r=>r.json()).then(data=>{
-        renderRevCalWithPrices(y,m,data.days||{});
-    }).catch(()=>{
-        renderRevCalWithPrices(y,m,{});
+    const dests=['TAS','CIT','ALA','FRU','DYU'];
+    
+    Promise.all(dests.map(d=>
+        fetch(API_URL+'/api/calendar?origin='+flyDest.iata+'&dest='+d+'&month='+mo)
+        .then(r=>r.json()).catch(()=>({days:{}}))
+    )).then(results=>{
+        const merged={};
+        results.forEach(r=>{
+            const days=r.days||{};
+            Object.keys(days).forEach(d=>{
+                if(!merged[d]||days[d].price<merged[d].price){
+                    merged[d]=days[d];
+                }
+            });
+        });
+        renderRevCalWithPrices(y,m,merged);
     });
 }
 
