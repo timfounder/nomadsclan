@@ -654,7 +654,7 @@ function showCal(y,m){
 
 // ===== STEP 7.3: SEARCH + RESULTS =====
 async function doSearch(){
-    const dp = flyDateStr ? flyDateStr.substring(0,7) : (flyMonth || '');
+    const dp = flyDateStr ? flyDateStr : (flyMonth || '');
     const dl = flyDateStr
         ? new Date(flyDateStr+'T00:00:00').toLocaleDateString(L==='uz'?'uz-Latn':'ru-RU',{day:'numeric',month:'long',year:'numeric'})
         : flyMonth
